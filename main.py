@@ -1,10 +1,12 @@
 
 def find_index_of_process(process_list, pid):
+    # return the index of the given process id in the processes list. return -1 if not found,
     i = 0
     for p in process_list:
         if p.get_process_id() == pid:
             return i
         i = i + 1
+    return -1
 
 class Process:
     def __init__(self, pid, process_list):
@@ -12,10 +14,13 @@ class Process:
         self.process_list = process_list
 
     def get_process_id(self):
+        # get the process id
         return self.pid
 
     def add_new_process_info(self, process):
-        self.process_list.append(process)
+        # add new process if not already present in the list
+        if find_index_of_process(self.process_list, process.get_process_id()) < 0:
+            self.process_list.append(process)
 
     def remove_process_info(self, pid):
         process_index = find_index_of_process(self.process_list, pid)
@@ -26,3 +31,4 @@ class Process:
             p.add_new_process_info(self)
 
 
+for x in range(10):
