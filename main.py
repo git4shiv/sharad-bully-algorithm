@@ -1,5 +1,6 @@
 GENERAL_SIGNAL = "general"
 ELECTION_SIGNAL = "election"
+PING_SIGNAL = "ping"
 RESPONSE_OK = "Ok"
 
 
@@ -21,12 +22,15 @@ def create_distribution_network(process_required_count):
         pid = process_created_count
         last_created_process = Process(pid, process_list)
         process_created_count += 1
+    last_created_process.become_coordinator()
     return last_created_process
 
 
 class Process:
     def __init__(self, pid, process_list):
         self.online = True
+        self.is_coordinator = False
+        self.coordinator_process_id = False
         self.pid = pid
         self.process_list = process_list
         self.update_process_list()
@@ -60,6 +64,18 @@ class Process:
         if signal_type == ELECTION_SIGNAL and self.pid > from_pid and self.online == True:
             self.hold_election()
             return RESPONSE_OK
+        if signal_type == PING_SIGNAL and self.online == True:
+            return RESPONSE_OK
+        return False
+
+    def register_coordinator(self, pid):
+        self.is_coordinator = self.pid == pid
+        self.coordinator_process_id = pid
+
+    def become_coordinator(self):
+        self.is_coordinator = True
+        for p in self.process_list:
+            p.register_coordinator(self.pid)
 
     def hold_election(self):
         cancel_election = False
@@ -68,6 +84,8 @@ class Process:
                 response = self.send_signal(ELECTION_SIGNAL, p.get_process_id(), "")
                 if response == RESPONSE_OK:
                     cancel_election = True
+        if not cancel_election:
+            self.become_coordinator()
 
     def send_signal(self, signal_type, pid, message):
         process_index = find_index_of_process(self.process_list, pid)
@@ -75,6 +93,29 @@ class Process:
         response = p.receive_signal(signal_type, self.pid, message)
         return response
 
+    def ping_coordinator(self):
+        response = self.send_signal(PING_SIGNAL, self.coordinator_process_id, "")
+        return response
+
 
 coordinator = create_distribution_network(10)
-coordinator.send_signal("general", 4, "hello world")
+
+process3 = coordinator.process_list[3]
+
+# turning coordinator down
+coordinator.online = False
+
+if not process3.ping_coordinator():
+    process3.hold_election()
+
+coordinator = process3.process_list[process3.coordinator_process_id]
+# turning coordinator down again
+coordinator.online = False
+
+if not process3.ping_coordinator():
+    process3.hold_election()
+
+print(process3.coordinator_process_id)
+
+
+# coordinator.send_signal("general", 4, "hello world")
