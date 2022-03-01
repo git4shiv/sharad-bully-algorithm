@@ -103,6 +103,10 @@ number_of_processes_in_distribution_network = int(input("How many process you wa
 coordinator = create_distribution_network(number_of_processes_in_distribution_network)
 print("Coordinator Process Id: {}".format(coordinator.get_process_id()))
 
+# making deputy offline
+deputy_coordinator = coordinator.get_process_list()[coordinator.get_process_id() - 1]
+deputy_coordinator.online = False
+
 process_id_which_detects_coordinator_failure = int(input("Process id which detects coordinator failure?"))
 process_which_detects_coordinator_failure = coordinator.process_list[process_id_which_detects_coordinator_failure]
 
