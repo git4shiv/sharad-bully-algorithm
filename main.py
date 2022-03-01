@@ -98,24 +98,20 @@ class Process:
         return response
 
 
-coordinator = create_distribution_network(10)
+number_of_processes_in_distribution_network = int(input("How many process you want in distribution network?"))
 
-process3 = coordinator.process_list[3]
+coordinator = create_distribution_network(number_of_processes_in_distribution_network)
+print("Coordinator Process Id: {}".format(coordinator.get_process_id()))
+
+process_id_which_detects_coordinator_failure = int(input("Process id which detects coordinator failure?"))
+process_which_detects_coordinator_failure = coordinator.process_list[process_id_which_detects_coordinator_failure]
 
 # turning coordinator down
 coordinator.online = False
+print("Coordinator went offline")
 
-if not process3.ping_coordinator():
-    process3.hold_election()
+if not process_which_detects_coordinator_failure.ping_coordinator():
+    process_which_detects_coordinator_failure.hold_election()
 
-coordinator = process3.process_list[process3.coordinator_process_id]
-# turning coordinator down again
-coordinator.online = False
-
-if not process3.ping_coordinator():
-    process3.hold_election()
-
-print(process3.coordinator_process_id)
-
-
-# coordinator.send_signal("general", 4, "hello world")
+coordinator = process_which_detects_coordinator_failure.process_list[process_which_detects_coordinator_failure.coordinator_process_id]
+print("New coordinator process Id: {}".format(coordinator.get_process_id()))
